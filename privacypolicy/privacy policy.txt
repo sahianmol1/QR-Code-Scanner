@@ -1,0 +1,4 @@
+1. By installing the app you accept that the app will be able to access your device's camera, flash, media and gallery, internet and more hardware features. We may ask permissions for some of the features but it is not necessary that we will ask permissions for all of the required features.
+2. By installing the app you accept that app might collect some data but we ensure that we will not misuse any information
+3. For incorrect QR code scan results, we and the google play will not be responsible
+4. some of the features might be broken. You can review the app in the play store or send an email to the developers
