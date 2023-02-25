@@ -31,6 +31,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.bestway.asqrscanner.R
+import com.bestway.asqrscanner.data.ReviewManager
 import com.bestway.asqrscanner.ui.presentation.QRCodeBackground
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.common.InputImage
