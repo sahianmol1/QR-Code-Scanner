@@ -3,4 +3,8 @@
     <string name="open_gallery">Open Gallery</string>
     <string name="turn_on_flash">Turn On Flash</string>
     <string name="scan_a_qr_code">Scan a QR Code</string>
+    <string name="update_required">Update Required</string>
+    <string name="force_update_dialog_text">We\'re constantly working on improving the app, and adding new features. Please update to the latest version to continue using the app uninterrupted</string>
+    <string name="update_now">Update Now</string>
+    <string name="cancel">Cancel</string>
 </resources>

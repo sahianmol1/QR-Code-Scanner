@@ -4,12 +4,15 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import com.bestway.asqrscanner.data.AppUpdateManager
 import com.bestway.asqrscanner.data.ReviewManager
+import com.bestway.asqrscanner.inappupdates.InAppUpdateManager
 import com.bestway.asqrscanner.ui.presentation.qrcodescanner.QRCodeScannerScreen
 import com.bestway.asqrscanner.ui.theme.ASQRScannerTheme
 import com.google.android.play.core.install.InstallStateUpdatedListener
@@ -17,16 +20,25 @@ import com.google.android.play.core.install.model.InstallStatus
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var appUpdateManager: AppUpdateManager
     private lateinit var appUpdateListener: InstallStateUpdatedListener
+    private val viewModel: MainViewModel by viewModels()
+    private lateinit var inAppUpdate: InAppUpdateManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val options = BarcodeScannerOptions.Builder()
             .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
             .build()
+
+        viewModel.fetchUpdateTypeFromRemoteConfig()
+        appUpdate()
+
 
         val barcodeScanner = BarcodeScanning.getClient(options)
         val reviewManager = ReviewManager(context = this)
@@ -44,6 +56,7 @@ class MainActivity : ComponentActivity() {
             true -> {
                 reviewManager.requestReviewInfo()
             }
+
             false -> {}
         }
 
@@ -76,7 +89,9 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colors.background
                 ) {
                     QRCodeScannerScreen(
-                        barcodeScanner = barcodeScanner
+                        barcodeScanner = barcodeScanner,
+                        onUpdateNowClick = { appUpdate() },
+                        onDismissTextClick = { this@MainActivity.finish() }
                     )
                 }
             }
@@ -109,11 +124,31 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        appUpdateManager.resumeUpdate(this)
+        inAppUpdate.onResume()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        appUpdateManager.unregisterListener(appUpdateListener)
+        inAppUpdate.onDestroy()
+    }
+
+    private fun appUpdate() {
+        lifecycleScope.launch {
+            viewModel.appUpdateState.collect {
+                inAppUpdate = InAppUpdateManager(
+                    activity = this@MainActivity,
+                    updateType = it.first,
+                    updateVersion = it.second,
+                    onFlexibleUpdateDownloaded = { flexibleUpdateDownloaded ->
+                        viewModel.handleDownloadedFlexibleAppUpdate(isDownloaded = flexibleUpdateDownloaded)
+                    },
+                    onUpdateTriggered = {}
+                )
+
+                if (it.first == AppUpdateState.FORCE) {
+                    viewModel.forceUpdateTriggered()
+                }
+            }
+        }
     }
 }

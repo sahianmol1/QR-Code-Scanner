@@ -56,8 +56,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bestway.asqrscanner.MainViewModel
 import com.bestway.asqrscanner.R
+import com.bestway.asqrscanner.ui.QRScannerAlertDialog
 import com.bestway.asqrscanner.ui.presentation.QRCodeBackground
+import com.bestway.asqrscanner.ui.theme.error_red
+import com.bestway.asqrscanner.ui.theme.white
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.CoroutineScope
@@ -67,7 +73,10 @@ import java.io.IOException
 
 @Composable
 fun QRCodeScannerScreen(
-    barcodeScanner: BarcodeScanner
+    barcodeScanner: BarcodeScanner,
+    onUpdateNowClick: () -> Unit,
+    onDismissTextClick: () -> Unit,
+    mainViewModel: MainViewModel = hiltViewModel()
 ) {
     var isTorchEnable by rememberSaveable { mutableStateOf(false) }
     var camera: Camera? by remember { mutableStateOf(null) }
@@ -80,6 +89,8 @@ fun QRCodeScannerScreen(
     var selectedImageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     var showLoading by rememberSaveable { mutableStateOf(false) }
     var inputImage by remember { mutableStateOf<InputImage?>(null) }
+
+    val showForceUpdateDialog by mainViewModel.isForceUpdatePending.collectAsStateWithLifecycle()
 
     val scaffoldState = rememberScaffoldState()
     val snackbarHostState by remember { mutableStateOf(scaffoldState.snackbarHostState) }
@@ -203,6 +214,20 @@ fun QRCodeScannerScreen(
                 GetSnackBarHost(snackbarHostState = snackbarHostState)
             }
         ) { paddingValues ->
+            if (showForceUpdateDialog) {
+                QRScannerAlertDialog(
+                    title = stringResource(R.string.update_required),
+                    text = stringResource(R.string.force_update_dialog_text),
+                    confirmText = stringResource(R.string.update_now),
+                    dismissText = stringResource(R.string.cancel),
+                    onDismissRequest = {},
+                    confirmTextColor = white,
+                    onConfirmTextClick = onUpdateNowClick,
+                    onDismissTextClick = onDismissTextClick,
+                    dismissTextColor = error_red
+                )
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
